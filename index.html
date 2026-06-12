@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+  
+  <!-- PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#ffffff">
+  <title>중등 과학 퀴즈</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔬</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔬</text></svg>">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans KR"', '-apple-system', '"Apple SD Gothic Neo"', '"Malgun Gothic"', 'sans-serif', '"Apple Color Emoji"', '"Noto Color Emoji"'],
+          },
+          colors: {
+            primary: '#3b82f6',
+            primaryFocus: '#2563eb',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- React & Babel -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* iOS Zoom 방지용 최소 폰트 사이즈 강제 적용 보조 */
+    input, textarea, select { font-size: 16px !important; }
+    /* 사파리 바운스 배경색 동기화 */
+    body { background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; }
+    .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.3); }
+    /* Safe Area 패딩 기본 적용 유틸 */
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+    .pt-safe { padding-top: env(safe-area-inset-top); }
+  </style>
+</head>
+<body class="antialiased text-gray-800">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback } = React;
+
+    // ==========================================
+    // 1. 필수 설정 (Hard Rules)
+    // ==========================================
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwvhWQQGR69NPhfO9a4qoDTTXL-FSolAw3ou3HS5rQLD2c2oDC6UWNOKtQP0uuNdzM/exec'; // ★여기에 배포된 앱스스크립트 URL 입력
+    const SHEET_NAME = '과학퀴즈응답'; // 저장될 시트 이름
+
+    // ==========================================
+    // 2. 퀴즈 데이터
+    // ==========================================
+    const quizData = [
+      {
+        unit: "1단원 과학적 탐구와 첨단 기술",
+        questions: [
+          { id: "1-1", type: "fill", q: "자연 현상을 관찰하며 '왜 그럴까?' 하고 의문을 품는 단계를 ( )라 합니다.", placeholder: "정답 입력" },
+          { id: "1-2", type: "fill", q: "( )은(는) 컴퓨터가 사람처럼 학습하고 업무를 처리하는 기술로, 자율 주행 등에 이용됩니다.", placeholder: "정답 입력" },
+          { id: "1-3", type: "ox", q: "인공지능(AI)은 스스로 학습하는 능력이 없으며, 사람이 모든 판단을 직접 입력해야 한다." },
+          { id: "1-4", type: "ox", q: "과학적 탐구는 자연 현상에 대한 의문에서 시작된다." }
+        ]
+      },
+      {
+        unit: "2단원 생물의 구성과 다양성",
+        questions: [
+          { id: "2-1", type: "fill", q: "생물체를 구성하는 생명 활동의 기본 단위를 ( )라 합니다.", placeholder: "정답 입력" },
+          { id: "2-2", type: "fill", q: "동물의 구성 단계를 순서대로 나열하면: ( ) → 조직 → ( ) → 기관계 → 개체 (두 단어를 쉼표로 구분해서 적어주세요. 예: A, B)", placeholder: "예: 기관, 개체" },
+          { id: "2-3", type: "fill", q: "일정 지역에 사는 생물의 다양한 정도를 ( )라 합니다.", placeholder: "정답 입력" },
+          { id: "2-4", type: "fill", q: "생물을 분류하는 기본 단위로, 암수가 교배하여 번식 능력이 있는 자손을 낳을 수 있는 무리를 ( )라 합니다.", placeholder: "정답 입력" },
+          { id: "2-5", type: "mc", q: "다음 중 생물다양성을 감소시키는 원인으로 가장 적절한 것은?", options: ["① 멸종 위기종 보호 프로그램", "② 국립공원 지정", "③ 외래종(큰입배스 등)의 유입", "④ 생태 통로 설치"] },
+          { id: "2-6", type: "ox", q: "식물도 동물과 마찬가지로 세포 → 조직 → 기관 → 기관계 → 개체 순서로 구성된다." }
+        ]
+      },
+      {
+        unit: "3단원 열과 우리 생활",
+        questions: [
+          { id: "3-1", type: "fill", q: "온도가 다른 두 물체가 접촉할 때, 열이 ( )에서 ( )(으)로 이동하여 온도가 같아진 상태를 ( )라 합니다. (쉼표로 구분)", placeholder: "예: 고온, 저온, 열평형" },
+          { id: "3-2", type: "fill", q: "고체에서 이웃한 입자로 열이 전달되는 방식을 ( )라 합니다.", placeholder: "정답 입력" },
+          { id: "3-3", type: "fill", q: "액체나 기체가 직접 이동하여 열이 전달되는 방식을 ( )라 합니다.", placeholder: "정답 입력" },
+          { id: "3-4", type: "fill", q: "온도가 높아질 때 물체의 길이나 부피가 증가하는 현상을 ( )라 합니다.", placeholder: "정답 입력" },
+          { id: "3-5", type: "mc", q: "비열에 대한 설명으로 옳은 것은?", options: ["① 비열이 클수록 온도가 빠르게 변한다", "② 비열이 작을수록 온도가 빠르게 변한다", "③ 비열은 물질의 양에 따라 달라진다", "④ 모든 물질의 비열은 같다"] },
+          { id: "3-6", type: "mc", q: "다음 중 열의 이동 방식이 나머지 셋과 다른 것은?", options: ["① 프라이팬 손잡이가 뜨거워진다", "② 냄비의 물이 골고루 뜨거워진다", "③ 쇠젓가락의 끝이 뜨거워진다", "④ 뜨거운 얼음 위에 동전을 올리면 얼음이 녹는다"] },
+          { id: "3-7", type: "ox", q: "복사는 열을 전달해 주는 물질(매질) 없이도 열이 직접 전달되는 방식이다." },
+          { id: "3-8", type: "ox", q: "열평형 상태에서는 열의 이동이 멈춘다." }
+        ]
+      },
+      {
+        unit: "4단원 물질의 상태 변화",
+        questions: [
+          { id: "4-1", type: "fill", q: "고체에서 액체로 변하는 현상을 ( )라 하고, 액체에서 기체로 변하는 현상을 ( )라 합니다. (쉼표로 구분)", placeholder: "예: 융해, 기화" },
+          { id: "4-2", type: "fill", q: "액체에서 고체로 변하는 현상을 ( )라 합니다.", placeholder: "정답 입력" },
+          { id: "4-3", type: "fill", q: "고체는 입자들이 매우 ( )적으로 배열되어 있어 모양이 일정합니다.", placeholder: "정답 입력" },
+          { id: "4-4", type: "mc", q: "소독용 알코올 솜으로 피부를 닦으면 시원하게 느껴지는 이유로 가장 적절한 것은?", options: ["① 알코올이 응고하면서 열을 방출하기 때문", "② 알코올이 기화하면서 주변의 열을 흡수하기 때문", "③ 알코올이 융해하면서 열을 방출하기 때문", "④ 알코올의 온도가 원래 낮기 때문"] },
+          { id: "4-5", type: "mc", q: "다음 중 에너지를 방출하는 상태 변화만으로 짝지어진 것은?", options: ["① 융해, 기화", "② 응고, 액화", "③ 기화, 승화(고체→기체)", "④ 융해, 액화"] },
+          { id: "4-6", type: "ox", q: "물질이 상태 변화할 때 물질의 질량은 변하지 않는다." },
+          { id: "4-7", type: "ox", q: "기화와 융해는 모두 주변의 열에너지를 흡수하는 변화이다." }
+        ]
+      },
+      {
+        unit: "5단원 힘과 운동",
+        questions: [
+          { id: "5-1", type: "fill", q: "지구가 물체를 당기는 힘을 ( )라 하며, 그 방향은 항상 ( ) 방향입니다. (쉼표로 구분)", placeholder: "예: 중력, 지구 중심" },
+          { id: "5-2", type: "fill", q: "물체의 운동을 방해하는 힘으로, 운동 방향과 반대로 작용하는 힘을 ( )라 합니다.", placeholder: "정답 입력" },
+          { id: "5-3", type: "fill", q: "온도가 일정할 때 압력이 낮아지면 기체의 부피는 ( ). 이를 ( ) 법칙이라 합니다. (쉼표로 구분)", placeholder: "예: 커진다, 보일" },
+          { id: "5-4", type: "fill", q: "압력이 일정할 때 온도가 높아지면 기체의 부피는 ( ). 이를 ( ) 법칙이라 합니다. (쉼표로 구분)", placeholder: "예: 커진다, 샤를" },
+          { id: "5-5", type: "mc", q: "기압에 대한 설명으로 옳지 않은 것은?", options: ["① 기체 입자의 충돌에 의해 생긴다", "② 기체 입자는 한 방향으로만 충돌한다", "③ 높은 곳일수록 기압이 낮아진다", "④ 기압은 모든 방향으로 작용한다"] },
+          { id: "5-6", type: "mc", q: "높은 산 위에서 과자 봉지가 부풀어 오르는 현상을 설명하는 법칙은?", options: ["① 뉴턴의 운동 법칙", "② 보일 법칙", "③ 샤를 법칙", "④ 훅의 법칙"] },
+          { id: "5-7", type: "ox", q: "중력의 방향은 물체의 위치에 관계없이 항상 지구 중심 방향이다." },
+          { id: "5-8", type: "ox", q: "마찰력은 항상 물체의 운동 방향과 같은 방향으로 작용한다." }
+        ]
+      },
+      {
+        unit: "6단원 태양계와 지구의 운동",
+        questions: [
+          { id: "6-1", type: "fill", q: "태양 표면에서 주변보다 온도가 낮아 검게 보이는 부분을 ( )라 합니다.", placeholder: "정답 입력" },
+          { id: "6-2", type: "fill", q: "태양계에서 가장 크고 표면에 대적점이 있는 행성은 ( )입니다.", placeholder: "정답 입력" },
+          { id: "6-3", type: "fill", q: "지구가 하루에 한 바퀴씩 스스로 도는 운동을 ( )라 하며, 이로 인해 별의 ( ) 운동이 나타납니다. (쉼표로 구분)", placeholder: "예: 자전, 일주" },
+          { id: "6-4", type: "mc", q: "태양 주위를 공전하며 태양 가까이 올 때 꼬리가 생기는 천체는?", options: ["① 소행성", "② 혜성", "③ 위성", "④ 유성"] },
+          { id: "6-5", type: "mc", q: "지구의 자전에 의해 나타나는 현상으로 옳은 것은?", options: ["① 계절이 변한다", "② 별이 동에서 서로 이동하는 것처럼 보인다", "③ 낮의 길이가 변한다", "④ 별자리가 계절마다 달라진다"] },
+          { id: "6-6", type: "ox", q: "달의 위상 변화는 달이 스스로 빛을 내는 양이 변하기 때문이다." },
+          { id: "6-7", type: "ox", q: "흑점은 태양 표면에서 주변보다 온도가 낮은 부분이다." }
+        ]
+      }
+    ];
+
+    // ==========================================
+    // 3. 아이콘 (Inline SVGs)
+    // ==========================================
+    const Icons = {
+      Gear: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
+      Close: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
+      ChevronLeft: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>,
+      Check: () => <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>,
+      Document: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+    };
+
+    // ==========================================
+    // 4. 유틸: 로컬스토리지 디바운스 훅
+    // ==========================================
+    function useDebouncedSave(key, data, delay = 1000) {
+      useEffect(() => {
+        const handler = setTimeout(() => {
+          localStorage.setItem(key, JSON.stringify(data));
+        }, delay);
+        return () => clearTimeout(handler);
+      }, [data, delay, key]);
+    }
+
+    // ==========================================
+    // 5. 공통 컴포넌트
+    // ==========================================
+    const Button = ({ children, onClick, variant = 'primary', className = '', type="button", disabled=false }) => {
+      const baseStyle = "min-h-[44px] min-w-[44px] px-6 py-3 rounded-xl font-medium transition-transform active:scale-95 flex items-center justify-center gap-2 select-none shadow-sm";
+      const variants = {
+        primary: "bg-primary text-white hover:bg-primaryFocus disabled:bg-blue-300",
+        secondary: "bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:bg-gray-50",
+        outline: "border-2 border-primary text-primary hover:bg-blue-50",
+        danger: "bg-red-500 text-white hover:bg-red-600"
+      };
+      return (
+        <button type={type} onClick={onClick} disabled={disabled} className={`${baseStyle} ${variants[variant]} ${className}`}>
+          {children}
+        </button>
+      );
+    };
+
+    const FullScreenSpinner = () => (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+        <div className="flex flex-col items-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-600 font-medium animate-pulse">제출 중입니다...</p>
+        </div>
+      </div>
+    );
+
+    const CustomModal = ({ isOpen, title, message, onConfirm, onCancel, confirmText = "확인", cancelText = "취소" }) => {
+      if (!isOpen) return null;
+      return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl transform transition-all">
+            <h3 className="text-lg font-bold mb-2">{title}</h3>
+            <p className="text-gray-600 mb-6">{message}</p>
+            <div className="flex gap-3">
+              {onCancel && <Button variant="secondary" onClick={onCancel} className="flex-1">{cancelText}</Button>}
+              <Button variant={title.includes('종료') || title.includes('취소') ? 'danger' : 'primary'} onClick={onConfirm} className="flex-1">{confirmText}</Button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const Toast = ({ message }) => {
+      if (!message) return null;
+      return (
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50 px-4 py-2 bg-gray-800/90 text-white rounded-full text-sm shadow-lg backdrop-blur animate-fade-in-up">
+          {message}
+        </div>
+      );
+    };
+
+    // ==========================================
+    // 6. 가이드 모달 컴포넌트 (앱스스크립트 설명)
+    // ==========================================
+    const GuideModal = ({ isOpen, onClose }) => {
+      if (!isOpen) return null;
+      
+      const gasCode = `function doPost(e) {
+  const sheetName = PropertiesService.getScriptProperties().getProperty('SHEET_NAME') || '${SHEET_NAME}';
+  const lock = LockService.getScriptLock();
+  lock.tryLock(10000);
+
+  try {
+    const doc = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = doc.getSheetByName(sheetName);
+
+    // 1. 시트 탭이 없으면 자동 생성
+    if (!sheet) {
+      sheet = doc.insertSheet(sheetName);
+    }
+
+    const data = JSON.parse(e.postData.contents);
+    const keys = Object.keys(data);
+    const headers = ["Timestamp", ...keys];
+
+    // 2 & 3. 헤더 자동 생성 및 컬럼 추가
+    let existingHeaders = [];
+    const lastCol = sheet.getLastColumn();
+    if (lastCol > 0) {
+      existingHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    } else {
+      // 1행 헤더가 비어있으면 초기 세팅
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#f3f4f6");
+      existingHeaders = headers;
+    }
+
+    // 신규 키가 있으면 헤더 끝에 자동 추가
+    const newHeaders = headers.filter(h => !existingHeaders.includes(h));
+    if (newHeaders.length > 0) {
+       sheet.getRange(1, lastCol + 1, 1, newHeaders.length).setValues([newHeaders]);
+       sheet.getRange(1, lastCol + 1, 1, newHeaders.length).setFontWeight("bold").setBackground("#f3f4f6");
+       existingHeaders = existingHeaders.concat(newHeaders);
+    }
+
+    // 데이터 기록
+    const rowData = existingHeaders.map(header => {
+      if (header === "Timestamp") return new Date();
+      return data[header] !== undefined ? data[header] : "";
+    });
+
+    sheet.appendRow(rowData);
+
+    return ContentService.createTextOutput(JSON.stringify({result: "success"}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({error: error.toString()}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
+}`;
+
+      return (
+        <div className="fixed inset-0 z-50 bg-gray-50 flex flex-col pt-safe pb-safe">
+          <div className="sticky top-0 bg-white/90 backdrop-blur border-b px-4 py-3 flex justify-between items-center z-10 min-h-[60px]">
+            <h2 className="text-lg font-bold">관리자 가이드 (설정 방법)</h2>
+            <button onClick={onClose} className="p-2 -mr-2 active:scale-95 text-gray-500 min-w-[44px] min-h-[44px] flex items-center justify-center">
+              <Icons.Close />
+            </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <section className="bg-white rounded-xl p-4 shadow-sm">
+              <h3 className="font-bold text-primary mb-2 flex items-center gap-2">
+                <span className="bg-blue-100 text-blue-800 w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+                구글 스프레드시트 & Apps Script 생성
+              </h3>
+              <ol className="list-decimal pl-5 space-y-2 text-sm text-gray-700 mt-3">
+                <li>새 구글 스프레드시트를 만듭니다.</li>
+                <li>상단 메뉴에서 <b>[확장 프로그램] > [Apps Script]</b>를 클릭합니다.</li>
+                <li>아래 코드를 복사하여 편집기에 붙여넣고 저장합니다.</li>
+              </ol>
+              <div className="mt-3 relative">
+                <textarea readOnly className="w-full h-48 bg-gray-800 text-green-400 text-xs p-3 rounded-lg font-mono focus:outline-none" value={gasCode}></textarea>
+              </div>
+            </section>
+
+            <section className="bg-white rounded-xl p-4 shadow-sm">
+              <h3 className="font-bold text-primary mb-2 flex items-center gap-2">
+                <span className="bg-blue-100 text-blue-800 w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
+                배포 및 웹앱 URL 연동
+              </h3>
+              <ol className="list-decimal pl-5 space-y-2 text-sm text-gray-700 mt-3">
+                <li>우측 상단 <b>[배포] > [새 배포]</b> 클릭</li>
+                <li>유형 선택에서 <b>웹 앱(Web App)</b> 톱니바퀴 클릭</li>
+                <li>액세스 권한: <b>모든 사용자(Anyone)</b>로 설정 후 배포</li>
+                <li>(중요) 권한 검토가 나오면 고급 > '안전하지 않음'으로 이동하여 허용</li>
+                <li>생성된 <b>웹 앱 URL</b>을 복사하여 index.html 최상단 <code className="bg-gray-100 px-1 rounded">GOOGLE_SCRIPT_URL</code> 변수에 붙여넣습니다.</li>
+              </ol>
+            </section>
+
+            <section className="bg-white rounded-xl p-4 shadow-sm">
+              <h3 className="font-bold text-primary mb-2 flex items-center gap-2">
+                <span className="bg-blue-100 text-blue-800 w-6 h-6 rounded-full flex items-center justify-center text-sm">3</span>
+                PWA / 홈 화면에 추가 방법
+              </h3>
+              <ul className="list-disc pl-5 space-y-2 text-sm text-gray-700 mt-3">
+                <li><b>iOS Safari:</b> 하단 공유 버튼(네모에 위화살표) 탭 &rarr; '홈 화면에 추가'</li>
+                <li><b>Android Chrome:</b> 우측 상단 메뉴(점 3개) 탭 &rarr; '홈 화면에 추가'</li>
+              </ul>
+            </section>
+            
+            <p className="text-center text-xs text-gray-400 pb-8">Created by Yang DH</p>
+          </div>
+        </div>
+      );
+    };
+
+    // ==========================================
+    // 7. 메인 App 컴포넌트
+    // ==========================================
+    const App = () => {
+      const [view, setView] = useState('home'); // 'home' | 'quiz' | 'result'
+      const [student, setStudent] = useState({ gradeClass: '', name: '' });
+      const [answers, setAnswers] = useState({});
+      const [isSubmitting, setIsSubmitting] = useState(false);
+      const [modal, setModal] = useState({ isOpen: false });
+      const [toastMsg, setToastMsg] = useState(null);
+      const [isGuideOpen, setIsGuideOpen] = useState(false);
+      
+      const backPressCountRef = useRef(0);
+      const backPressTimerRef = useRef(null);
+
+      // 로컬 스토리지 초기 로드
+      useEffect(() => {
+        const savedStudent = localStorage.getItem('draft_student');
+        const savedAnswers = localStorage.getItem('draft_answers');
+        if (savedStudent) setStudent(JSON.parse(savedStudent));
+        if (savedAnswers) setAnswers(JSON.parse(savedAnswers));
+      }, []);
+
+      // 로컬 스토리지 자동 저장 (디바운스)
+      useDebouncedSave('draft_student', student, 500);
+      useDebouncedSave('draft_answers', answers, 1000);
+
+      // 라우팅(History API) 동기화
+      const navigate = useCallback((newView) => {
+        window.history.pushState({ view: newView }, '', '');
+        setView(newView);
+        window.scrollTo(0, 0);
+      }, []);
+
+      // 초기 History 상태 세팅
+      useEffect(() => {
+        window.history.replaceState({ view: 'home' }, '', '');
+      }, []);
+
+      // 뒤로가기 핸들러 (popstate)
+      useEffect(() => {
+        const handlePopState = (e) => {
+          const currentView = e.state?.view || 'home';
+          
+          if (isGuideOpen) {
+            setIsGuideOpen(false);
+            window.history.pushState({ view: view }, '', ''); // 뷰 복구
+            return;
+          }
+
+          if (modal.isOpen) {
+            setModal({ isOpen: false });
+            window.history.pushState({ view: view }, '', ''); // 뷰 복구
+            return;
+          }
+
+          if (view === 'quiz' && currentView === 'home') {
+            // 폼 작성 중 뒤로가기 시 확인
+            window.history.pushState({ view: 'quiz' }, '', ''); // 일단 현재 뷰 유지
+            setModal({
+              isOpen: true,
+              title: "퀴즈 나가기",
+              message: "작성 중인 내용은 임시저장됩니다. 홈으로 돌아가시겠습니까?",
+              confirmText: "나가기",
+              onConfirm: () => {
+                setModal({ isOpen: false });
+                setView('home');
+                window.history.replaceState({ view: 'home' }, '', '');
+              },
+              onCancel: () => setModal({ isOpen: false })
+            });
+            return;
+          }
+
+          if (view === 'home' || currentView === 'home') {
+            backPressCountRef.current += 1;
+            if (backPressCountRef.current === 1) {
+              setToastMsg("한 번 더 누르면 종료됩니다.");
+              window.history.pushState({ view: 'home' }, '', ''); // 상태 유지
+              
+              backPressTimerRef.current = setTimeout(() => {
+                backPressCountRef.current = 0;
+                setToastMsg(null);
+              }, 2000);
+            } else {
+              // 두 번 누름 -> 진짜 뒤로가기(종료) 허용
+              window.history.back(); 
+            }
+            return;
+          }
+
+          setView(currentView);
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+      }, [view, isGuideOpen, modal.isOpen]);
+
+      // 새로고침/이탈 방지
+      useEffect(() => {
+        const handleBeforeUnload = (e) => {
+          if (view === 'quiz') {
+            e.preventDefault();
+            e.returnValue = '';
+          }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+      }, [view]);
+
+      const handleStartQuiz = () => {
+        if (!student.gradeClass.trim() || !student.name.trim()) {
+          setModal({
+            isOpen: true,
+            title: "알림",
+            message: "학번과 이름을 모두 입력해주세요.",
+            onConfirm: () => setModal({ isOpen: false })
+          });
+          return;
+        }
+        navigate('quiz');
+      };
+
+      const handleAnswerChange = (qId, value) => {
+        setAnswers(prev => ({ ...prev, [qId]: value }));
+      };
+
+      const handleSubmit = async () => {
+        // Validation: 최소 1문제 이상 풀었는지 (원한다면 전체 필수로 변경 가능)
+        const answeredCount = Object.keys(answers).filter(k => answers[k] && String(answers[k]).trim() !== '').length;
+        if (answeredCount === 0) {
+           setModal({
+            isOpen: true,
+            title: "알림",
+            message: "최소 1문제 이상 정답을 입력해주세요.",
+            onConfirm: () => setModal({ isOpen: false })
+          });
+          return;
+        }
+
+        setModal({
+          isOpen: true,
+          title: "제출 확인",
+          message: "작성한 퀴즈를 제출하시겠습니까? 제출 후에는 수정할 수 없습니다.",
+          confirmText: "제출하기",
+          onConfirm: async () => {
+            setModal({ isOpen: false });
+            setIsSubmitting(true);
+
+            // 데이터 취합
+            const payload = {
+              "학번": student.gradeClass,
+              "이름": student.name,
+              ...answers
+            };
+
+            try {
+              // mode: 'no-cors'는 응답을 읽을 수 없으므로 성공으로 간주함
+              await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+              
+              // 성공 처리
+              localStorage.removeItem('draft_answers'); // 제출 후 임시저장 초기화
+              setIsSubmitting(false);
+              navigate('result');
+
+            } catch (error) {
+              setIsSubmitting(false);
+              setModal({
+                isOpen: true,
+                title: "오류 발생",
+                message: "제출 중 문제가 발생했습니다. 네트워크 연결을 확인해주세요.",
+                onConfirm: () => setModal({ isOpen: false })
+              });
+            }
+          },
+          onCancel: () => setModal({ isOpen: false })
+        });
+      };
+
+      const openGuide = () => {
+        window.history.pushState({ view: view, modal: 'guide' }, '', '');
+        setIsGuideOpen(true);
+      };
+
+      // --- Views ---
+      const HomeView = () => (
+        <div className="flex flex-col items-center justify-center min-h-[100dvh] p-6 pt-safe pb-safe max-w-screen-sm mx-auto">
+          <div className="w-full glass rounded-3xl p-8 shadow-xl text-center">
+            <div className="bg-blue-100 text-primary w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+              <span className="text-4xl">🔬</span>
+            </div>
+            <h1 className="text-2xl font-bold mb-2">중등 과학 복습 퀴즈</h1>
+            <p className="text-gray-500 mb-8 text-sm">1단원 ~ 6단원 핵심 개념 정리</p>
+
+            <div className="space-y-4 text-left">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">학번 (예: 2학년 2반 3번 &rarr; 2203)</label>
+                <input 
+                  type="number" 
+                  value={student.gradeClass}
+                  onChange={(e) => setStudent({...student, gradeClass: e.target.value})}
+                  placeholder="학번 입력" 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 ml-1">이름</label>
+                <input 
+                  type="text" 
+                  value={student.name}
+                  onChange={(e) => setStudent({...student, name: e.target.value})}
+                  placeholder="이름 입력" 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                />
+              </div>
+            </div>
+
+            <Button onClick={handleStartQuiz} className="w-full mt-8 text-lg font-bold shadow-md">
+              퀴즈 시작하기
+            </Button>
+          </div>
+          <button onClick={openGuide} className="fixed bottom-6 right-6 p-3 bg-white/80 backdrop-blur rounded-full shadow-lg text-gray-500 hover:text-primary active:scale-95 transition-transform z-40 pb-safe">
+            <Icons.Gear />
+          </button>
+        </div>
+      );
+
+      const QuizView = () => (
+        <div className="min-h-[100dvh] flex flex-col pt-safe pb-safe bg-gray-50">
+          <header className="sticky top-0 bg-white/90 backdrop-blur border-b px-4 py-3 flex items-center gap-3 z-30">
+            <button onClick={() => window.history.back()} className="p-2 -ml-2 text-gray-600 active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center">
+              <Icons.ChevronLeft />
+            </button>
+            <div className="flex-1">
+              <h1 className="font-bold text-lg leading-tight">과학 퀴즈</h1>
+              <p className="text-xs text-gray-500">{student.gradeClass} {student.name}</p>
+            </div>
+          </header>
+
+          <main className="flex-1 overflow-y-auto p-4 max-w-screen-md mx-auto w-full pb-24">
+            {quizData.map((unitData, uIdx) => (
+              <div key={uIdx} className="mb-10 last:mb-0">
+                <h2 className="text-xl font-bold mb-4 text-primary bg-blue-50 py-2 px-3 rounded-lg border border-blue-100">{unitData.unit}</h2>
+                <div className="space-y-6">
+                  {unitData.questions.map((q, qIdx) => {
+                    const currentAnswer = answers[q.id] || '';
+                    return (
+                      <div key={q.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                        <div className="flex gap-2 mb-3">
+                          <span className="font-bold text-gray-400 mt-0.5">{qIdx + 1}.</span>
+                          <p className="font-medium text-gray-800 leading-relaxed text-[15px]">{q.q}</p>
+                        </div>
+                        
+                        <div className="pl-6 mt-3">
+                          {q.type === 'fill' && (
+                            <input 
+                              type="text" 
+                              value={currentAnswer}
+                              onChange={(e) => handleAnswerChange(q.id, e.target.value)}
+                              placeholder={q.placeholder || "정답 입력"}
+                              className="w-full border-b-2 border-gray-200 focus:border-primary px-2 py-2 bg-gray-50 rounded-t-md focus:bg-blue-50/30 transition-colors focus:outline-none"
+                            />
+                          )}
+                          
+                          {q.type === 'ox' && (
+                            <div className="flex gap-3">
+                              <button 
+                                onClick={() => handleAnswerChange(q.id, 'O')}
+                                className={`flex-1 py-3 rounded-xl border-2 font-bold text-xl transition-all min-h-[44px] ${currentAnswer === 'O' ? 'border-primary bg-blue-50 text-primary' : 'border-gray-200 text-gray-400 bg-gray-50'}`}
+                              >O</button>
+                              <button 
+                                onClick={() => handleAnswerChange(q.id, 'X')}
+                                className={`flex-1 py-3 rounded-xl border-2 font-bold text-xl transition-all min-h-[44px] ${currentAnswer === 'X' ? 'border-red-500 bg-red-50 text-red-500' : 'border-gray-200 text-gray-400 bg-gray-50'}`}
+                              >X</button>
+                            </div>
+                          )}
+
+                          {q.type === 'mc' && (
+                            <div className="space-y-2">
+                              {q.options.map((opt, oIdx) => {
+                                const isSelected = currentAnswer === opt;
+                                return (
+                                  <button
+                                    key={oIdx}
+                                    onClick={() => handleAnswerChange(q.id, opt)}
+                                    className={`w-full text-left p-3 rounded-xl border transition-all min-h-[44px] text-sm ${isSelected ? 'border-primary bg-blue-50 text-primary font-medium' : 'border-gray-200 bg-white text-gray-600'}`}
+                                  >
+                                    {opt}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </main>
+
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur border-t pb-safe z-30">
+            <div className="max-w-screen-md mx-auto">
+               <Button onClick={handleSubmit} className="w-full text-lg shadow-lg">제출하기</Button>
+            </div>
+          </div>
+        </div>
+      );
+
+      const ResultView = () => (
+        <div className="flex flex-col items-center justify-center min-h-[100dvh] p-6 pt-safe pb-safe max-w-screen-sm mx-auto text-center">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6 animate-bounce-short">
+            <Icons.Check />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">제출 완료!</h2>
+          <p className="text-gray-500 mb-8 leading-relaxed">
+            {student.name} 학생의<br/>퀴즈 응답이 성공적으로 기록되었습니다.<br/>수고하셨습니다.
+          </p>
+          <Button onClick={() => {
+            setStudent({ gradeClass: '', name: '' });
+            setAnswers({});
+            navigate('home');
+          }} variant="outline" className="w-full">
+            처음으로 돌아가기
+          </Button>
+        </div>
+      );
+
+      return (
+        <div className="w-full h-full">
+          {view === 'home' && <HomeView />}
+          {view === 'quiz' && <QuizView />}
+          {view === 'result' && <ResultView />}
+          
+          <CustomModal {...modal} />
+          <GuideModal isOpen={isGuideOpen} onClose={() => {
+            setIsGuideOpen(false);
+            window.history.back(); // 팝스테이트 스택에서 가이드 모달 제거
+          }} />
+          <Toast message={toastMsg} />
+          {isSubmitting && <FullScreenSpinner />}
+        </div>
+      );
+    };
+
+    // React 18 렌더링
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
