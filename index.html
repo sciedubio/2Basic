@@ -521,8 +521,8 @@
         setIsGuideOpen(true);
       };
 
-      // --- Views ---
-      const HomeView = () => (
+      // --- Views (내부 컴포넌트 형태에서 함수 호출 형태로 변경하여 리렌더링 시 포커스 유지) ---
+      const renderHomeView = () => (
         <div className="flex flex-col items-center justify-center min-h-[100dvh] p-6 pt-safe pb-safe max-w-screen-sm mx-auto">
           <div className="w-full glass rounded-3xl p-8 shadow-xl text-center">
             <div className="bg-blue-100 text-primary w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
@@ -564,7 +564,7 @@
         </div>
       );
 
-      const QuizView = () => (
+      const renderQuizView = () => (
         <div className="min-h-[100dvh] flex flex-col pt-safe pb-safe bg-gray-50">
           <header className="sticky top-0 bg-white/90 backdrop-blur border-b px-4 py-3 flex items-center gap-3 z-30">
             <button onClick={() => window.history.back()} className="p-2 -ml-2 text-gray-600 active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center">
@@ -647,7 +647,7 @@
         </div>
       );
 
-      const ResultView = () => (
+      const renderResultView = () => (
         <div className="flex flex-col items-center justify-center min-h-[100dvh] p-6 pt-safe pb-safe max-w-screen-sm mx-auto text-center">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6 animate-bounce-short">
             <Icons.Check />
@@ -668,9 +668,9 @@
 
       return (
         <div className="w-full h-full">
-          {view === 'home' && <HomeView />}
-          {view === 'quiz' && <QuizView />}
-          {view === 'result' && <ResultView />}
+          {view === 'home' && renderHomeView()}
+          {view === 'quiz' && renderQuizView()}
+          {view === 'result' && renderResultView()}
           
           <CustomModal {...modal} />
           <GuideModal isOpen={isGuideOpen} onClose={() => {
