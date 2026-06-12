@@ -15,7 +15,7 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -64,80 +64,95 @@
     const SHEET_NAME = '과학퀴즈응답'; // 저장될 시트 이름
 
     // ==========================================
-    // 2. 퀴즈 데이터
+    // 2. 퀴즈 데이터 (정답 및 해설 포함)
     // ==========================================
     const quizData = [
       {
         unit: "1단원 과학적 탐구와 첨단 기술",
         questions: [
-          { id: "1-1", type: "fill", q: "자연 현상을 관찰하며 '왜 그럴까?' 하고 의문을 품는 단계를 ( )라 합니다.", placeholder: "정답 입력" },
-          { id: "1-2", type: "fill", q: "( )은(는) 컴퓨터가 사람처럼 학습하고 업무를 처리하는 기술로, 자율 주행 등에 이용됩니다.", placeholder: "정답 입력" },
-          { id: "1-3", type: "ox", q: "인공지능(AI)은 스스로 학습하는 능력이 없으며, 사람이 모든 판단을 직접 입력해야 한다." },
-          { id: "1-4", type: "ox", q: "과학적 탐구는 자연 현상에 대한 의문에서 시작된다." }
+          { id: "1-1", type: "fill", q: "자연 현상을 관찰하며 '왜 그럴까?' 하고 의문을 품는 단계를 ( )라 합니다.", placeholder: "정답 입력", answer: "문제 인식" },
+          { id: "1-2", type: "fill", q: "( )은(는) 컴퓨터가 사람처럼 학습하고 업무를 처리하는 기술로, 자율 주행 등에 이용됩니다.", placeholder: "정답 입력", answer: ["인공지능(AI)", "인공지능", "AI"] },
+          { id: "1-3", type: "ox", q: "인공지능(AI)은 스스로 학습하는 능력이 없으며, 사람이 모든 판단을 직접 입력해야 한다.", answer: "X", explanation: "AI는 데이터를 바탕으로 스스로 학습하는 능력이 있습니다." },
+          { id: "1-4", type: "ox", q: "과학적 탐구는 자연 현상에 대한 의문에서 시작된다.", answer: "O" }
         ]
       },
       {
         unit: "2단원 생물의 구성과 다양성",
         questions: [
-          { id: "2-1", type: "fill", q: "생물체를 구성하는 생명 활동의 기본 단위를 ( )라 합니다.", placeholder: "정답 입력" },
-          { id: "2-2", type: "fill", q: "동물의 구성 단계를 순서대로 나열하면: ( ) → 조직 → ( ) → 기관계 → 개체 (두 단어를 쉼표로 구분해서 적어주세요. 예: A, B)", placeholder: "예: 기관, 개체" },
-          { id: "2-3", type: "fill", q: "일정 지역에 사는 생물의 다양한 정도를 ( )라 합니다.", placeholder: "정답 입력" },
-          { id: "2-4", type: "fill", q: "생물을 분류하는 기본 단위로, 암수가 교배하여 번식 능력이 있는 자손을 낳을 수 있는 무리를 ( )라 합니다.", placeholder: "정답 입력" },
-          { id: "2-5", type: "mc", q: "다음 중 생물다양성을 감소시키는 원인으로 가장 적절한 것은?", options: ["① 멸종 위기종 보호 프로그램", "② 국립공원 지정", "③ 외래종(큰입배스 등)의 유입", "④ 생태 통로 설치"] },
-          { id: "2-6", type: "ox", q: "식물도 동물과 마찬가지로 세포 → 조직 → 기관 → 기관계 → 개체 순서로 구성된다." }
+          { id: "2-1", type: "fill", q: "생물체를 구성하는 생명 활동의 기본 단위를 ( )라 합니다.", placeholder: "정답 입력", answer: "세포" },
+          { id: "2-2", type: "fill", q: "동물의 구성 단계를 순서대로 나열하면: ( ) → 조직 → ( ) → 기관계 → 개체 (두 단어를 쉼표로 구분해서 적어주세요. 예: A, B)", placeholder: "예: 기관, 개체", answer: "기관, 개체" },
+          { id: "2-3", type: "fill", q: "일정 지역에 사는 생물의 다양한 정도를 ( )라 합니다.", placeholder: "정답 입력", answer: "생물다양성" },
+          { id: "2-4", type: "fill", q: "생물을 분류하는 기본 단위로, 암수가 교배하여 번식 능력이 있는 자손을 낳을 수 있는 무리를 ( )라 합니다.", placeholder: "정답 입력", answer: "종" },
+          { id: "2-5", type: "mc", q: "다음 중 생물다양성을 감소시키는 원인으로 가장 적절한 것은?", options: ["① 멸종 위기종 보호 프로그램", "② 국립공원 지정", "③ 외래종(큰입배스 등)의 유입", "④ 생태 통로 설치"], answer: "③ 외래종(큰입배스 등)의 유입" },
+          { id: "2-6", type: "ox", q: "식물도 동물과 마찬가지로 세포 → 조직 → 기관 → 기관계 → 개체 순서로 구성된다.", answer: "X", explanation: "식물은 기관계가 없이 세포 → 조직 → 기관 → 개체 순서로 구성됩니다." }
         ]
       },
       {
         unit: "3단원 열과 우리 생활",
         questions: [
-          { id: "3-1", type: "fill", q: "온도가 다른 두 물체가 접촉할 때, 열이 ( )에서 ( )(으)로 이동하여 온도가 같아진 상태를 ( )라 합니다. (쉼표로 구분)", placeholder: "예: 고온, 저온, 열평형" },
-          { id: "3-2", type: "fill", q: "고체에서 이웃한 입자로 열이 전달되는 방식을 ( )라 합니다.", placeholder: "정답 입력" },
-          { id: "3-3", type: "fill", q: "액체나 기체가 직접 이동하여 열이 전달되는 방식을 ( )라 합니다.", placeholder: "정답 입력" },
-          { id: "3-4", type: "fill", q: "온도가 높아질 때 물체의 길이나 부피가 증가하는 현상을 ( )라 합니다.", placeholder: "정답 입력" },
-          { id: "3-5", type: "mc", q: "비열에 대한 설명으로 옳은 것은?", options: ["① 비열이 클수록 온도가 빠르게 변한다", "② 비열이 작을수록 온도가 빠르게 변한다", "③ 비열은 물질의 양에 따라 달라진다", "④ 모든 물질의 비열은 같다"] },
-          { id: "3-6", type: "mc", q: "다음 중 열의 이동 방식이 나머지 셋과 다른 것은?", options: ["① 프라이팬 손잡이가 뜨거워진다", "② 냄비의 물이 골고루 뜨거워진다", "③ 쇠젓가락의 끝이 뜨거워진다", "④ 뜨거운 얼음 위에 동전을 올리면 얼음이 녹는다"] },
-          { id: "3-7", type: "ox", q: "복사는 열을 전달해 주는 물질(매질) 없이도 열이 직접 전달되는 방식이다." },
-          { id: "3-8", type: "ox", q: "열평형 상태에서는 열의 이동이 멈춘다." }
+          { id: "3-1", type: "fill", q: "온도가 다른 두 물체가 접촉할 때, 열이 ( )에서 ( )(으)로 이동하여 온도가 같아진 상태를 ( )라 합니다. (쉼표로 구분)", placeholder: "예: 고온, 저온, 열평형", answer: "고온, 저온, 열평형" },
+          { id: "3-2", type: "fill", q: "고체에서 이웃한 입자로 열이 전달되는 방식을 ( )라 합니다.", placeholder: "정답 입력", answer: "전도" },
+          { id: "3-3", type: "fill", q: "액체나 기체가 직접 이동하여 열이 전달되는 방식을 ( )라 합니다.", placeholder: "정답 입력", answer: "대류" },
+          { id: "3-4", type: "fill", q: "온도가 높아질 때 물체의 길이나 부피가 증가하는 현상을 ( )라 합니다.", placeholder: "정답 입력", answer: "열팽창" },
+          { id: "3-5", type: "mc", q: "비열에 대한 설명으로 옳은 것은?", options: ["① 비열이 클수록 온도가 빠르게 변한다", "② 비열이 작을수록 온도가 빠르게 변한다", "③ 비열은 물질의 양에 따라 달라진다", "④ 모든 물질의 비열은 같다"], answer: "② 비열이 작을수록 온도가 빠르게 변한다" },
+          { id: "3-6", type: "mc", q: "다음 중 열의 이동 방식이 나머지 셋과 다른 것은?", options: ["① 프라이팬 손잡이가 뜨거워진다", "② 냄비의 물이 골고루 뜨거워진다", "③ 쇠젓가락의 끝이 뜨거워진다", "④ 뜨거운 얼음 위에 동전을 올리면 얼음이 녹는다"], answer: "② 냄비의 물이 골고루 뜨거워진다", explanation: "이것은 대류이고, 나머지는 전도입니다." },
+          { id: "3-7", type: "ox", q: "복사는 열을 전달해 주는 물질(매질) 없이도 열이 직접 전달되는 방식이다.", answer: "O" },
+          { id: "3-8", type: "ox", q: "열평형 상태에서는 열의 이동이 멈춘다.", answer: "O", explanation: "열평형 상태에서는 두 물체의 온도가 같아져 더 이상 열이 이동하지 않습니다." }
         ]
       },
       {
         unit: "4단원 물질의 상태 변화",
         questions: [
-          { id: "4-1", type: "fill", q: "고체에서 액체로 변하는 현상을 ( )라 하고, 액체에서 기체로 변하는 현상을 ( )라 합니다. (쉼표로 구분)", placeholder: "예: 융해, 기화" },
-          { id: "4-2", type: "fill", q: "액체에서 고체로 변하는 현상을 ( )라 합니다.", placeholder: "정답 입력" },
-          { id: "4-3", type: "fill", q: "고체는 입자들이 매우 ( )적으로 배열되어 있어 모양이 일정합니다.", placeholder: "정답 입력" },
-          { id: "4-4", type: "mc", q: "소독용 알코올 솜으로 피부를 닦으면 시원하게 느껴지는 이유로 가장 적절한 것은?", options: ["① 알코올이 응고하면서 열을 방출하기 때문", "② 알코올이 기화하면서 주변의 열을 흡수하기 때문", "③ 알코올이 융해하면서 열을 방출하기 때문", "④ 알코올의 온도가 원래 낮기 때문"] },
-          { id: "4-5", type: "mc", q: "다음 중 에너지를 방출하는 상태 변화만으로 짝지어진 것은?", options: ["① 융해, 기화", "② 응고, 액화", "③ 기화, 승화(고체→기체)", "④ 융해, 액화"] },
-          { id: "4-6", type: "ox", q: "물질이 상태 변화할 때 물질의 질량은 변하지 않는다." },
-          { id: "4-7", type: "ox", q: "기화와 융해는 모두 주변의 열에너지를 흡수하는 변화이다." }
+          { id: "4-1", type: "fill", q: "고체에서 액체로 변하는 현상을 ( )라 하고, 액체에서 기체로 변하는 현상을 ( )라 합니다. (쉼표로 구분)", placeholder: "예: 융해, 기화", answer: "융해, 기화" },
+          { id: "4-2", type: "fill", q: "액체에서 고체로 변하는 현상을 ( )라 합니다.", placeholder: "정답 입력", answer: "응고" },
+          { id: "4-3", type: "fill", q: "고체는 입자들이 매우 ( )적으로 배열되어 있어 모양이 일정합니다.", placeholder: "정답 입력", answer: "규칙" },
+          { id: "4-4", type: "mc", q: "소독용 알코올 솜으로 피부를 닦으면 시원하게 느껴지는 이유로 가장 적절한 것은?", options: ["① 알코올이 응고하면서 열을 방출하기 때문", "② 알코올이 기화하면서 주변의 열을 흡수하기 때문", "③ 알코올이 융해하면서 열을 방출하기 때문", "④ 알코올의 온도가 원래 낮기 때문"], answer: "② 알코올이 기화하면서 주변의 열을 흡수하기 때문" },
+          { id: "4-5", type: "mc", q: "다음 중 에너지를 방출하는 상태 변화만으로 짝지어진 것은?", options: ["① 융해, 기화", "② 응고, 액화", "③ 기화, 승화(고체→기체)", "④ 융해, 액화"], answer: "② 응고, 액화", explanation: "둘 다 에너지를 방출하는 상태 변화입니다." },
+          { id: "4-6", type: "ox", q: "물질이 상태 변화할 때 물질의 질량은 변하지 않는다.", answer: "O", explanation: "상태가 변해도 물질 자체가 달라지는 것이 아니므로 질량은 보존됩니다." },
+          { id: "4-7", type: "ox", q: "기화와 융해는 모두 주변의 열에너지를 흡수하는 변화이다.", answer: "O" }
         ]
       },
       {
         unit: "5단원 힘과 운동",
         questions: [
-          { id: "5-1", type: "fill", q: "지구가 물체를 당기는 힘을 ( )라 하며, 그 방향은 항상 ( ) 방향입니다. (쉼표로 구분)", placeholder: "예: 중력, 지구 중심" },
-          { id: "5-2", type: "fill", q: "물체의 운동을 방해하는 힘으로, 운동 방향과 반대로 작용하는 힘을 ( )라 합니다.", placeholder: "정답 입력" },
-          { id: "5-3", type: "fill", q: "온도가 일정할 때 압력이 낮아지면 기체의 부피는 ( ). 이를 ( ) 법칙이라 합니다. (쉼표로 구분)", placeholder: "예: 커진다, 보일" },
-          { id: "5-4", type: "fill", q: "압력이 일정할 때 온도가 높아지면 기체의 부피는 ( ). 이를 ( ) 법칙이라 합니다. (쉼표로 구분)", placeholder: "예: 커진다, 샤를" },
-          { id: "5-5", type: "mc", q: "기압에 대한 설명으로 옳지 않은 것은?", options: ["① 기체 입자의 충돌에 의해 생긴다", "② 기체 입자는 한 방향으로만 충돌한다", "③ 높은 곳일수록 기압이 낮아진다", "④ 기압은 모든 방향으로 작용한다"] },
-          { id: "5-6", type: "mc", q: "높은 산 위에서 과자 봉지가 부풀어 오르는 현상을 설명하는 법칙은?", options: ["① 뉴턴의 운동 법칙", "② 보일 법칙", "③ 샤를 법칙", "④ 훅의 법칙"] },
-          { id: "5-7", type: "ox", q: "중력의 방향은 물체의 위치에 관계없이 항상 지구 중심 방향이다." },
-          { id: "5-8", type: "ox", q: "마찰력은 항상 물체의 운동 방향과 같은 방향으로 작용한다." }
+          { id: "5-1", type: "fill", q: "지구가 물체를 당기는 힘을 ( )라 하며, 그 방향은 항상 ( ) 방향입니다. (쉼표로 구분)", placeholder: "예: 중력, 지구 중심", answer: "중력, 지구 중심" },
+          { id: "5-2", type: "fill", q: "물체의 운동을 방해하는 힘으로, 운동 방향과 반대로 작용하는 힘을 ( )라 합니다.", placeholder: "정답 입력", answer: "마찰력" },
+          { id: "5-3", type: "fill", q: "온도가 일정할 때 압력이 낮아지면 기체의 부피는 ( ). 이를 ( ) 법칙이라 합니다. (쉼표로 구분)", placeholder: "예: 커진다, 보일", answer: "커진다, 보일" },
+          { id: "5-4", type: "fill", q: "압력이 일정할 때 온도가 높아지면 기체의 부피는 ( ). 이를 ( ) 법칙이라 합니다. (쉼표로 구분)", placeholder: "예: 커진다, 샤를", answer: "커진다, 샤를" },
+          { id: "5-5", type: "mc", q: "기압에 대한 설명으로 옳지 않은 것은?", options: ["① 기체 입자의 충돌에 의해 생긴다", "② 기체 입자는 한 방향으로만 충돌한다", "③ 높은 곳일수록 기압이 낮아진다", "④ 기압은 모든 방향으로 작용한다"], answer: "② 기체 입자는 한 방향으로만 충돌한다", explanation: "기체 입자는 모든 방향으로 운동하며 충돌합니다." },
+          { id: "5-6", type: "mc", q: "높은 산 위에서 과자 봉지가 부풀어 오르는 현상을 설명하는 법칙은?", options: ["① 뉴턴의 운동 법칙", "② 보일 법칙", "③ 샤를 법칙", "④ 훅의 법칙"], answer: "② 보일 법칙", explanation: "높은 산에서는 기압(외부 압력)이 낮아져 기체의 부피가 커집니다." },
+          { id: "5-7", type: "ox", q: "중력의 방향은 물체의 위치에 관계없이 항상 지구 중심 방향이다.", answer: "O" },
+          { id: "5-8", type: "ox", q: "마찰력은 항상 물체의 운동 방향과 같은 방향으로 작용한다.", answer: "X", explanation: "마찰력은 운동 방향과 반대 방향으로 작용합니다." }
         ]
       },
       {
         unit: "6단원 태양계와 지구의 운동",
         questions: [
-          { id: "6-1", type: "fill", q: "태양 표면에서 주변보다 온도가 낮아 검게 보이는 부분을 ( )라 합니다.", placeholder: "정답 입력" },
-          { id: "6-2", type: "fill", q: "태양계에서 가장 크고 표면에 대적점이 있는 행성은 ( )입니다.", placeholder: "정답 입력" },
-          { id: "6-3", type: "fill", q: "지구가 하루에 한 바퀴씩 스스로 도는 운동을 ( )라 하며, 이로 인해 별의 ( ) 운동이 나타납니다. (쉼표로 구분)", placeholder: "예: 자전, 일주" },
-          { id: "6-4", type: "mc", q: "태양 주위를 공전하며 태양 가까이 올 때 꼬리가 생기는 천체는?", options: ["① 소행성", "② 혜성", "③ 위성", "④ 유성"] },
-          { id: "6-5", type: "mc", q: "지구의 자전에 의해 나타나는 현상으로 옳은 것은?", options: ["① 계절이 변한다", "② 별이 동에서 서로 이동하는 것처럼 보인다", "③ 낮의 길이가 변한다", "④ 별자리가 계절마다 달라진다"] },
-          { id: "6-6", type: "ox", q: "달의 위상 변화는 달이 스스로 빛을 내는 양이 변하기 때문이다." },
-          { id: "6-7", type: "ox", q: "흑점은 태양 표면에서 주변보다 온도가 낮은 부분이다." }
+          { id: "6-1", type: "fill", q: "태양 표면에서 주변보다 온도가 낮아 검게 보이는 부분을 ( )라 합니다.", placeholder: "정답 입력", answer: "흑점" },
+          { id: "6-2", type: "fill", q: "태양계에서 가장 크고 표면에 대적점이 있는 행성은 ( )입니다.", placeholder: "정답 입력", answer: "목성" },
+          { id: "6-3", type: "fill", q: "지구가 하루에 한 바퀴씩 스스로 도는 운동을 ( )라 하며, 이로 인해 별의 ( ) 운동이 나타납니다. (쉼표로 구분)", placeholder: "예: 자전, 일주", answer: "자전, 일주" },
+          { id: "6-4", type: "mc", q: "태양 주위를 공전하며 태양 가까이 올 때 꼬리가 생기는 천체는?", options: ["① 소행성", "② 혜성", "③ 위성", "④ 유성"], answer: "② 혜성" },
+          { id: "6-5", type: "mc", q: "지구의 자전에 의해 나타나는 현상으로 옳은 것은?", options: ["① 계절이 변한다", "② 별이 동에서 서로 이동하는 것처럼 보인다", "③ 낮의 길이가 변한다", "④ 별자리가 계절마다 달라진다"], answer: "② 별이 동에서 서로 이동하는 것처럼 보인다" },
+          { id: "6-6", type: "ox", q: "달의 위상 변화는 달이 스스로 빛을 내는 양이 변하기 때문이다.", answer: "X", explanation: "달은 스스로 빛을 내지 않으며, 태양빛을 반사합니다. 달의 위치에 따라 지구에서 보이는 밝은 부분의 모양이 달라지는 것입니다." },
+          { id: "6-7", type: "ox", q: "흑점은 태양 표면에서 주변보다 온도가 낮은 부분이다.", answer: "O" }
         ]
       }
     ];
+
+    // ==========================================
+    // 정답 체크 유틸 (주관식 띄어쓰기 등 관대한 채점)
+    // ==========================================
+    const checkAnswer = (correct, userAns) => {
+      if (!userAns) return false;
+      // 공백 제거 및 소문자 변환하여 유연하게 비교
+      const normalize = (str) => String(str).replace(/\s+/g, '').toLowerCase();
+      const nUser = normalize(userAns);
+      
+      if (Array.isArray(correct)) {
+        return correct.some(ans => normalize(ans) === nUser);
+      }
+      return normalize(correct) === nUser;
+    };
 
     // ==========================================
     // 3. 아이콘 (Inline SVGs)
@@ -146,7 +161,7 @@
       Gear: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
       Close: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
       ChevronLeft: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>,
-      Check: () => <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>,
+      Check: () => <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>,
       Document: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
     };
 
@@ -198,7 +213,7 @@
             <p className="text-gray-600 mb-6">{message}</p>
             <div className="flex gap-3">
               {onCancel && <Button variant="secondary" onClick={onCancel} className="flex-1">{cancelText}</Button>}
-              <Button variant={title.includes('종료') || title.includes('취소') ? 'danger' : 'primary'} onClick={onConfirm} className="flex-1">{confirmText}</Button>
+              <Button variant={title.includes('종료') || title.includes('취소') || title.includes('나가기') ? 'danger' : 'primary'} onClick={onConfirm} className="flex-1">{confirmText}</Button>
             </div>
           </div>
         </div>
@@ -406,6 +421,13 @@
             return;
           }
 
+          if (view === 'result' && currentView === 'quiz') {
+             // 결과 화면에서 뒤로가기 방지 (처음으로 가기 유도)
+             window.history.pushState({ view: 'result' }, '', '');
+             setToastMsg("하단의 '처음으로 돌아가기' 버튼을 이용해주세요.");
+             return;
+          }
+
           if (view === 'home' || currentView === 'home') {
             backPressCountRef.current += 1;
             if (backPressCountRef.current === 1) {
@@ -460,17 +482,38 @@
       };
 
       const handleSubmit = async () => {
-        // Validation: 최소 1문제 이상 풀었는지 (원한다면 전체 필수로 변경 가능)
-        const answeredCount = Object.keys(answers).filter(k => answers[k] && String(answers[k]).trim() !== '').length;
-        if (answeredCount === 0) {
+        let unansweredCount = 0;
+        let totalQuestions = 0;
+        
+        quizData.forEach(unit => {
+          unit.questions.forEach(q => {
+            totalQuestions++;
+            const userAns = answers[q.id];
+            if (!userAns || String(userAns).trim() === '') {
+              unansweredCount++;
+            }
+          });
+        });
+
+        // 1. 미입력 문항 검사 (전체 필수)
+        if (unansweredCount > 0) {
            setModal({
             isOpen: true,
             title: "알림",
-            message: "최소 1문제 이상 정답을 입력해주세요.",
+            message: `아직 풀지 않은 문제가 ${unansweredCount}개 있습니다. 모든 문제를 풀고 제출해주세요.`,
             onConfirm: () => setModal({ isOpen: false })
           });
           return;
         }
+
+        // 2. 점수 계산
+        let correctCount = 0;
+        quizData.forEach(unit => {
+          unit.questions.forEach(q => {
+             if (checkAnswer(q.answer, answers[q.id])) correctCount++;
+          });
+        });
+        const score = Math.round((correctCount / totalQuestions) * 100);
 
         setModal({
           isOpen: true,
@@ -485,6 +528,8 @@
             const payload = {
               "학번": student.gradeClass,
               "이름": student.name,
+              "점수": score,
+              "정답수": `${correctCount} / ${totalQuestions}`,
               ...answers
             };
 
@@ -498,7 +543,7 @@
               });
               
               // 성공 처리
-              localStorage.removeItem('draft_answers'); // 제출 후 임시저장 초기화
+              localStorage.removeItem('draft_answers'); // 제출 후 임시저장 초기화 (state는 유지하여 결과창에서 사용)
               setIsSubmitting(false);
               navigate('result');
 
@@ -647,24 +692,105 @@
         </div>
       );
 
-      const renderResultView = () => (
-        <div className="flex flex-col items-center justify-center min-h-[100dvh] p-6 pt-safe pb-safe max-w-screen-sm mx-auto text-center">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6 animate-bounce-short">
-            <Icons.Check />
+      const renderResultView = () => {
+        let correctCount = 0;
+        let totalQuestions = 0;
+        
+        // 결과 렌더링 시 점수 재계산
+        quizData.forEach(unit => {
+          unit.questions.forEach(q => {
+            totalQuestions++;
+            if (checkAnswer(q.answer, answers[q.id])) correctCount++;
+          });
+        });
+        const score = Math.round((correctCount / totalQuestions) * 100);
+
+        return (
+          <div className="min-h-[100dvh] flex flex-col pt-safe pb-safe bg-gray-50">
+            <header className="sticky top-0 bg-white/90 backdrop-blur border-b px-4 py-3 flex items-center justify-center z-30 shadow-sm">
+              <h1 className="font-bold text-lg">결과 확인</h1>
+            </header>
+
+            <main className="flex-1 overflow-y-auto p-4 max-w-screen-md mx-auto w-full pb-24">
+              {/* 상단 점수 요약 */}
+              <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 text-center mb-8">
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4 mx-auto animate-bounce-short text-green-500">
+                  <Icons.Check />
+                </div>
+                <h2 className="text-2xl font-black mb-2 text-gray-800">제출 완료!</h2>
+                <p className="text-gray-500 mb-6">{student.name} 학생의 결과입니다.</p>
+                <div className="inline-block bg-blue-50 px-8 py-5 rounded-2xl border border-blue-100">
+                  <div className="text-sm font-bold text-primary mb-1">총점</div>
+                  <div className="text-5xl font-black text-primary">{score}<span className="text-2xl">점</span></div>
+                  <div className="text-sm text-gray-500 mt-2 font-medium">총 {totalQuestions}문제 중 {correctCount}문제 정답</div>
+                </div>
+              </div>
+
+              <h3 className="text-xl font-black mb-6 px-2 text-gray-800">상세 결과 및 해설</h3>
+              
+              {/* 오답 및 해설 목록 */}
+              <div className="space-y-8">
+                {quizData.map((unitData, uIdx) => (
+                  <div key={uIdx} className="space-y-4">
+                    <h4 className="font-bold text-primary bg-blue-50 py-2 px-3 rounded-lg border border-blue-100">{unitData.unit}</h4>
+                    {unitData.questions.map((q, qIdx) => {
+                      const userAns = answers[q.id] || '';
+                      const isCorrect = checkAnswer(q.answer, userAns);
+                      const displayAnswer = Array.isArray(q.answer) ? q.answer[0] : q.answer;
+
+                      return (
+                        <div key={q.id} className={`bg-white rounded-2xl p-5 shadow-sm border-l-4 ${isCorrect ? 'border-green-400' : 'border-red-400'}`}>
+                          <div className="flex gap-2 mb-3">
+                            <span className="font-bold text-gray-400 mt-0.5">{qIdx + 1}.</span>
+                            <p className="font-medium text-gray-800 leading-relaxed text-[15px]">{q.q}</p>
+                          </div>
+                          
+                          <div className="pl-6 space-y-3 mt-4">
+                            {/* 내 답안 */}
+                            <div className={`flex flex-wrap items-center gap-2 p-3 rounded-xl text-sm ${isCorrect ? 'bg-green-50' : 'bg-red-50'}`}>
+                              <span className="font-bold text-gray-500 min-w-[50px]">내 답안</span>
+                              <span className={`font-bold ${isCorrect ? 'text-green-700' : 'text-red-600'}`}>{userAns}</span>
+                              {isCorrect 
+                                ? <span className="ml-auto bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">정답!</span> 
+                                : <span className="ml-auto bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">오답</span>}
+                            </div>
+                            
+                            {/* 정답 표시 (틀렸을 때만) */}
+                            {!isCorrect && (
+                              <div className="flex flex-wrap items-center gap-2 bg-blue-50 p-3 rounded-xl text-sm">
+                                <span className="font-bold text-primary min-w-[50px]">정답</span>
+                                <span className="font-bold text-blue-800">{displayAnswer}</span>
+                              </div>
+                            )}
+
+                            {/* 해설 */}
+                            {q.explanation && (
+                              <div className="mt-2 text-sm text-gray-600 bg-gray-100 p-4 rounded-xl border border-gray-200 leading-relaxed">
+                                <span className="font-black text-gray-700 mr-2">💡 해설:</span>
+                                {q.explanation}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ))}
+              </div>
+            </main>
+
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur border-t pb-safe z-30">
+              <div className="max-w-screen-md mx-auto">
+                 <Button onClick={() => {
+                  setStudent({ gradeClass: '', name: '' });
+                  setAnswers({});
+                  navigate('home');
+                }} variant="outline" className="w-full text-lg shadow-sm bg-white hover:bg-gray-50">처음으로 돌아가기</Button>
+              </div>
+            </div>
           </div>
-          <h2 className="text-2xl font-bold mb-2">제출 완료!</h2>
-          <p className="text-gray-500 mb-8 leading-relaxed">
-            {student.name} 학생의<br/>퀴즈 응답이 성공적으로 기록되었습니다.<br/>수고하셨습니다.
-          </p>
-          <Button onClick={() => {
-            setStudent({ gradeClass: '', name: '' });
-            setAnswers({});
-            navigate('home');
-          }} variant="outline" className="w-full">
-            처음으로 돌아가기
-          </Button>
-        </div>
-      );
+        );
+      };
 
       return (
         <div className="w-full h-full">
